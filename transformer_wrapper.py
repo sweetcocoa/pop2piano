@@ -6,11 +6,9 @@ import librosa
 import torch
 import torch.optim as optim
 import pytorch_lightning as pl
-import wandb
 import soundfile as sf
 from torch.nn.utils.rnn import pad_sequence
-from omegaconf import OmegaConf
-from transformers import T5Config, T5ForConditionalGeneration, Adafactor
+from transformers import T5Config, T5ForConditionalGeneration
 
 from midi_tokenizer import MidiTokenizer, extrapolate_beat_times
 from layer.input import LogMelSpectrogram, ConcatEmbeddingToMel
@@ -55,8 +53,6 @@ class TransformerWrapper(pl.LightningModule):
             self.spectrogram = None
 
         self.lr = config.training.lr
-        self.save_hyperparameters(self.config)
-        self.saved_gt_to_tensorboard = 0
 
     def forward(self, input_ids, labels):
         """
@@ -118,15 +114,7 @@ class TransformerWrapper(pl.LightningModule):
             )
             batch_size = inputs_embeds.shape[0]
         else:
-            input_ids, ext_beatstep = self.prepare_inference_token(
-                feature_tokens,
-                beatstep,
-                n_bars=n_bars,
-                padding_value=PAD,
-                use_composer=True,
-            )
-            inputs_embeds = None
-            batch_size = input_ids.shape[0]
+            raise NotImplementedError
 
         # Considering GPU capacity, some sequence would not be generated at once.
         relative_tokens = list()
@@ -206,133 +194,6 @@ class TransformerWrapper(pl.LightningModule):
             inputs_embeds = self.mel_conditioner(inputs_embeds, composer_value)
         return inputs_embeds, ext_beatstep
 
-    def on_validation_epoch_start(self) -> None:
-        return super().on_validation_epoch_start()
-
-    def validation_step(self, mini_batch, batch_idx):
-        loss = self.common_transcription_step(mini_batch, phase="val")
-        return loss
-
-    def validation_epoch_end(self, outputs) -> None:
-        def to_gpu(dict_batch: dict):
-            for k, v in dict_batch.items():
-                if not isinstance(dict_batch[k], list):  # not string(path)
-                    dict_batch[k] = v.cuda()
-            return dict_batch
-
-        writer = self.logger.experiment
-
-        val_dataset = self.trainer.val_dataloaders[0].dataset
-
-        val_dataset.eval = True
-        mini_batch = next(iter(self.trainer.val_dataloaders[0]))
-        mini_batch = to_gpu(mini_batch)
-        val_dataset.eval = False
-
-        def validation_log(audio_batch):
-            rendered_midis = []
-            transcripted_pm = []
-
-            log_num = min(audio_batch["audio"].shape[0], 16)
-            for i in range(log_num):
-                filename = audio_batch["filename"][i]
-                idx_in_dataset = audio_batch["idx"][i].item()
-                beat_offset_idx = audio_batch["start_idx"][i].item()
-                beat_end_idx = audio_batch["end_idx"][i].item()
-                composer_value = audio_batch["composer_value"][i].item()
-                beatstep = (
-                    val_dataset.beatsteps[idx_in_dataset][beat_offset_idx:beat_end_idx]
-                    - val_dataset.beatsteps[idx_in_dataset][beat_offset_idx]
-                )
-                midi_path = f"{self.logger._experiment.dir}/transcript/{filename}.midi"
-                os.makedirs(os.path.dirname(midi_path), exist_ok=True)
-                feature_tokens = (
-                    None if self.use_mel else audio_batch["feature_tokens"][i]
-                )
-                audio = audio_batch["audio"][i] if self.use_mel else None
-                relative_tokens, notes, pm = self.single_inference(
-                    feature_tokens=feature_tokens,
-                    audio=audio,
-                    beatstep=beatstep,
-                    max_length=self.config.dataset.target_length,
-                    composer_value=composer_value,
-                )
-                pm.write(midi_path)
-                rendered_midi = pm.fluidsynth(self.config.dataset.sample_rate)
-                transcripted_pm.append(pm)
-                rendered_midis.append(rendered_midi)
-
-            if self.saved_gt_to_tensorboard < 1:
-                audio_logs = []
-                for i in range(log_num):
-                    filename = audio_batch["filename"][i]
-                    audio_log = wandb.Audio(
-                        audio_batch["audio"][i].cpu().numpy(),
-                        sample_rate=self.config.dataset.sample_rate,
-                        caption=f"{filename}",
-                    )
-                    audio_logs.append(audio_log)
-
-                writer.log({"pop_audio": audio_logs})
-                self.saved_gt_to_tensorboard += 1
-
-            piano_logs = []
-            for i in range(log_num):
-                filename = audio_batch["filename"][i]
-                if rendered_midis[i] is None or len(rendered_midis[i]) <= 0:
-                    rendered_midis[i] = (
-                        torch.zeros_like(audio_batch["audio"][i]).detach().cpu().numpy()
-                    )
-
-                audio_log = wandb.Audio(
-                    rendered_midis[i],
-                    sample_rate=self.config.dataset.sample_rate,
-                    caption=f"{filename}",
-                )
-                piano_logs.append(audio_log)
-
-            writer.log({"piano": piano_logs})
-
-        if self.global_rank == 0:
-            validation_log(mini_batch)
-
-    def configure_optimizers(self):
-        """
-        optimizer, scheduler 세팅
-        """
-        config = self.config.training
-        if config.optimizer == "adafactor":
-            Optimizer = Adafactor
-            kwargs = dict(relative_step=False, clip_threshold=config.gradient_clip_val)
-        else:
-            raise NotImplementedError
-
-        transcriber_optimizer = Optimizer(
-            self.transformer.parameters(), lr=self.lr, **kwargs
-        )
-
-        # Setting Scheduler
-        monitor = None
-        if config.lr_scheduler == "multistep":
-            t_scheduler = optim.lr_scheduler.MultiStepLR(
-                transcriber_optimizer,
-                [15 * (x + 2) for x in range(500)],
-                gamma=config.lr_decay,
-            )
-
-        elif not config.lr_scheduler:
-            t_scheduler = None
-        else:
-            raise ValueError(f"unknown lr_scheduler :: {config.lr_scheduler}")
-
-        if t_scheduler is None:
-            return transcriber_optimizer
-        else:
-            return (
-                [transcriber_optimizer],
-                [t_scheduler],
-            )
-
     @torch.no_grad()
     def generate(
         self,
@@ -351,20 +212,11 @@ class TransformerWrapper(pl.LightningModule):
         click_amp=0.2,
         add_click=False,
         max_batch_size=None,
-        vqvae=None,
-        vqvae_token=None,
         beatsteps=None,
         mix_sample_rate=None,
         audio_y=None,
         audio_sr=None,
     ):
-        if not self.use_mel:
-            assert vqvae is not None or vqvae_token is not None
-
-        if not audio_path and audio_y is None:
-            assert not self.use_mel
-            assert beatsteps is not None and vqvae_token is not None
-
         config = self.config
         device = self.device
 
