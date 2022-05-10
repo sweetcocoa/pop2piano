@@ -1,0 +1,61 @@
+project: pop2piano
+dataset:
+  target_length: 256
+  input_length: 1024
+  n_bars: 2
+  sample_rate: 22050
+  use_mel: true
+  mel_is_conditioned: true
+composer_to_feature_token:
+  composer1: 2052
+  composer2: 2053
+  composer3: 2054
+  composer4: 2055
+  composer5: 2056
+  composer6: 2057
+  composer7: 2058
+  composer8: 2059
+  composer9: 2060
+  composer10: 2061
+  composer11: 2062
+  composer12: 2063
+  composer13: 2064
+  composer14: 2065
+  composer15: 2066
+  composer16: 2067
+  composer17: 2068
+  composer18: 2069
+  composer19: 2070
+  composer20: 2071
+  composer21: 2072
+t5:
+  feed_forward_proj: gated-gelu
+  tie_word_embeddings: false
+  tie_encoder_decoder: false
+  vocab_size: 2400
+  n_positions: 1024
+  relative_attention_num_buckets: 32
+tokenizer:
+  vocab_size:
+    special: 4
+    note: 128
+    velocity: 2
+    time: 100
+training:
+  seed: 3407
+  resume: false
+  offline: false
+  num_gpu: 1
+  max_epochs: 5000
+  accumulate_grad_batches: 1
+  check_val_every_n_epoch: 20
+  find_lr: false
+  optimizer: adafactor
+  version: none
+  lr: 0.001
+  lr_min: 1.0e-06
+  lr_scheduler: false
+  lr_decay: 0.99
+  batch_size: 32
+  num_workers: 32
+  gradient_clip_val: 3.0
