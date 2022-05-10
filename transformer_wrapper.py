@@ -286,7 +286,7 @@ class TransformerWrapper(pl.LightningModule):
 
             start_sample = int(beatsteps[0] * sr)
             end_sample = int(beatsteps[-1] * sr)
-            _audio = torch.from_numpy(y)[start_sample:end_sample].cuda()
+            _audio = torch.from_numpy(y)[start_sample:end_sample].to(device)
             fzs = None
         else:
             raise NotImplementedError
@@ -323,10 +323,10 @@ class TransformerWrapper(pl.LightningModule):
             from IPython.display import display
             import note_seq
 
-            display(ipd.Audio(pm_y, rate=sr))
-            display(ipd.Audio(y, rate=sr))
-            display(ipd.Audio(stereo, rate=sr))
-            note_seq.plot_sequence(note_seq.midi_to_note_sequence(pm))
+            display("Stereo MIX", ipd.Audio(stereo, rate=sr))
+            display("Rendered MIDI", ipd.Audio(pm_y, rate=sr))
+            display("Original Song", ipd.Audio(y, rate=sr))
+            display(note_seq.plot_sequence(note_seq.midi_to_note_sequence(pm)))
 
         if save_mix:
             sf.write(
