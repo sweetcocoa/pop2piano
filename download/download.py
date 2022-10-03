@@ -106,10 +106,11 @@ def download_pop(piano_id, pop_id, output_dir, dry_run):
 
     if not dry_run:
         files = list(filter(lambda x: x.endswith(".wav"), os.listdir(pop_output_dir)))
+        files = glob.glob(os.path.join(pop_output_dir, "*.wav"))
         for filename in files:
-            filename_wo_ext, ext = os.path.splitext(filename)
+            filename_wo_ext, ext = os.path.splitext(os.path.basename(filename))
             ytid, title, duration = filename_wo_ext.split("___")
-            yaml = os.path.join(output_dir, "../" + piano_id + ".yaml")
+            yaml = os.path.join(output_dir, piano_id + ".yaml")
 
             meta = OmegaConf.load(yaml)
             meta.song = OmegaConf.create()
@@ -119,7 +120,7 @@ def download_pop(piano_id, pop_id, output_dir, dry_run):
 
             OmegaConf.save(meta, yaml)
             shutil.move(
-                os.path.join(output_dir, filename),
+                os.path.join(filename),
                 os.path.join(output_dir, f"{ytid}{ext}"),
             )
 
@@ -148,16 +149,14 @@ if __name__ == "__main__":
 
     parser.add_argument("dataset", type=str, default=None, help="provided csv")
     parser.add_argument("output_dir", type=str, default=None, help="output dir")
-    parser.add_argument(
-        "--dry_run", default=False, action="store_true", help="whether dry_run"
-    )
+    parser.add_argument("--dry_run", default=False, action="store_true", help="whether dry_run")
 
     args = parser.parse_args()
 
     df = pd.read_csv(args.dataset)
-    df = df[:100]
+    df = df[:50]
 
-    # piano_list = df["piano_ids"].tolist()
+    piano_list = df["piano_ids"].tolist()
     # download_piano_main(piano_list, args.output_dir, args.dry_run)
 
     available_piano_list = glob.glob(args.output_dir + "/**/*.yaml", recursive=True)
@@ -165,12 +164,15 @@ if __name__ == "__main__":
 
     failed_piano = []
 
-    for ap in tqdm(available_piano_list):
-        ytid = os.path.splitext(os.path.basename(ap))[0]
-        if ytid in df["piano_ids"]:
+    available_piano_list_id = [
+        os.path.splitext(os.path.basename(ap))[0] for ap in available_piano_list
+    ]
+
+    for piano_id_to_be_downloaded in tqdm(df["piano_ids"]):
+        if piano_id_to_be_downloaded in available_piano_list_id:
             continue
         else:
-            failed_piano.append(ytid)
+            failed_piano.append(piano_id_to_be_downloaded)
 
     if len(failed_piano) > 0:
         print(f"{len(failed_piano)} of files are failed to be downloaded")
@@ -178,6 +180,5 @@ if __name__ == "__main__":
 
     piano_list = df["piano_ids"].tolist()
     pop_list = df["pop_ids"].tolist()
-    download_pop_main(
-        piano_list, pop_list, output_dir=args.output_dir, dry_run=args.dry_run
-    )
+
+    download_pop_main(piano_list, pop_list, output_dir=args.output_dir, dry_run=args.dry_run)
