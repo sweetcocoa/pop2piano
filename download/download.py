@@ -150,14 +150,11 @@ if __name__ == "__main__":
     parser.add_argument("dataset", type=str, default=None, help="provided csv")
     parser.add_argument("output_dir", type=str, default=None, help="output dir")
     parser.add_argument("--dry_run", default=False, action="store_true", help="whether dry_run")
-
     args = parser.parse_args()
 
     df = pd.read_csv(args.dataset)
-    df = df[:50]
-
     piano_list = df["piano_ids"].tolist()
-    # download_piano_main(piano_list, args.output_dir, args.dry_run)
+    download_piano_main(piano_list, args.output_dir, args.dry_run)
 
     available_piano_list = glob.glob(args.output_dir + "/**/*.yaml", recursive=True)
     df.index = df["piano_ids"]
