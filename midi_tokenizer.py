@@ -221,6 +221,7 @@ class MidiTokenizer:
         beat_offset_idx=None,
         bars_per_batch=None,
         cutoff_time_idx=None,
+        midi_bpm=120
     ):
         """
         tokens : (batch, sequence)
@@ -251,7 +252,7 @@ class MidiTokenizer:
 
         if notes is None:
             notes = []
-        midi = self.notes_to_midi(notes, beatstep, offset_sec=beatstep[beat_offset_idx])
+        midi = self.notes_to_midi(notes, beatstep, offset_sec=beatstep[beat_offset_idx], midi_bpm=midi_bpm)
         return midi, notes
 
     def relative_tokens_to_notes(self, tokens, start_idx, cutoff_time_idx=None):
@@ -339,8 +340,10 @@ class MidiTokenizer:
             notes = notes[note_order.argsort()]
             return notes
 
-    def notes_to_midi(self, notes, beatstep, offset_sec=None):
-        new_pm = pretty_midi.PrettyMIDI(resolution=384, initial_tempo=120.0)
+    def notes_to_midi(self, notes, beatstep, offset_sec=None, midi_bpm=120.0):
+        if midi_bpm <= 0.0:
+            midi_bpm = 120.0
+        new_pm = pretty_midi.PrettyMIDI(resolution=384, initial_tempo=midi_bpm)
         new_inst = pretty_midi.Instrument(program=0)
         new_notes = []
         if offset_sec is None:
