@@ -71,7 +71,7 @@ class TransformerWrapper(pl.LightningModule):
         max_batch_size=64,
         n_bars=None,
         composer_value=None,
-        midi_bpm=120,
+        midi_bpm=120.0,
     ):
         """
         generate a long audio sequence
@@ -218,7 +218,7 @@ class TransformerWrapper(pl.LightningModule):
         mix_sample_rate=None,
         audio_y=None,
         audio_sr=None,
-        midi_bpm=120,
+        midi_bpm=120.0,
     ):
         config = self.config
         device = self.device

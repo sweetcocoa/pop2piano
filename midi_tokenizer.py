@@ -221,7 +221,7 @@ class MidiTokenizer:
         beat_offset_idx=None,
         bars_per_batch=None,
         cutoff_time_idx=None,
-        midi_bpm=120
+        midi_bpm=120.0,
     ):
         """
         tokens : (batch, sequence)
