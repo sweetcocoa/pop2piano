@@ -152,7 +152,7 @@ class TransformerWrapper(pl.LightningModule):
             beatstep=ext_beatstep,
             bars_per_batch=n_bars,
             cutoff_time_idx=(n_bars + 1) * 4,
-            midi_bpm=midi_bpm
+            midi_bpm=midi_bpm,
         )
 
         return relative_tokens, notes, pm
@@ -303,7 +303,7 @@ class TransformerWrapper(pl.LightningModule):
             max_batch_size=max_batch_size,
             n_bars=n_bars,
             composer_value=composer_value,
-            midi_bpm=midi_bpm
+            midi_bpm=midi_bpm,
         )
 
         for n in pm.instruments[0].notes:
