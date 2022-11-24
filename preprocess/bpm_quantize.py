@@ -26,7 +26,9 @@ def estimate(meta_file, ignore_sustain_pedal):
     ):
         return
 
-    bpm, beat_times, confidence, estimates, essentia_beat_intervals = extract_rhythm(sample.song)
+    bpm, beat_times, confidence, estimates, essentia_beat_intervals = extract_rhythm(
+        sample.song
+    )
     beat_times = np.array(beat_times)
     essentia_beat_intervals = np.array(essentia_beat_intervals)
 
@@ -87,7 +89,6 @@ if __name__ == "__main__":
         "--ignore_sustain_pedal",
         default=False,
         action="store_true",
-        help="whether dry_run",
     )
 
     args = parser.parse_args()

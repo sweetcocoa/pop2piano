@@ -23,7 +23,7 @@ def download_piano(
     postprocess=True,
     dry_run=False,
 ) -> int:
-    os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+    # os.makedirs(os.path.dirname(output_dir), exist_ok=True)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output = f"{tmpdir}/%(uploader)s___%(title)s___%(id)s___%(duration)d.%(ext)s"
@@ -73,6 +73,7 @@ def download_piano_main(piano_list, output_dir, dry_run=False):
     """
     piano_list : list of youtube id
     """
+    os.makedirs(output_dir, exist_ok=True)
     Parallel(n_jobs=multiprocessing.cpu_count())(
         delayed(download_piano)(
             url=f"https://www.youtube.com/watch?v={ytid}",
@@ -121,7 +122,7 @@ def download_pop(piano_id, pop_id, output_dir, dry_run):
             OmegaConf.save(meta, yaml)
             shutil.move(
                 os.path.join(filename),
-                os.path.join(output_dir, f"{ytid}{ext}"),
+                os.path.join(pop_output_dir, f"{ytid}{ext}"),
             )
 
 
@@ -149,10 +150,19 @@ if __name__ == "__main__":
 
     parser.add_argument("dataset", type=str, default=None, help="provided csv")
     parser.add_argument("output_dir", type=str, default=None, help="output dir")
-    parser.add_argument("--dry_run", default=False, action="store_true", help="whether dry_run")
+    parser.add_argument(
+        "--num_audio",
+        type=int,
+        default=None,
+        help="if specified, only {num_audio} pairs will be downloaded",
+    )
+    parser.add_argument(
+        "--dry_run", default=False, action="store_true", help="whether dry_run"
+    )
     args = parser.parse_args()
 
     df = pd.read_csv(args.dataset)
+    df = df[: args.num_audio]
     piano_list = df["piano_ids"].tolist()
     download_piano_main(piano_list, args.output_dir, args.dry_run)
 
@@ -178,4 +188,6 @@ if __name__ == "__main__":
     piano_list = df["piano_ids"].tolist()
     pop_list = df["pop_ids"].tolist()
 
-    download_pop_main(piano_list, pop_list, output_dir=args.output_dir, dry_run=args.dry_run)
+    download_pop_main(
+        piano_list, pop_list, output_dir=args.output_dir, dry_run=args.dry_run
+    )
