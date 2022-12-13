@@ -7,6 +7,7 @@
 1. Transcribe piano wavs to midi
 - You should transcribe {piano_cover_file.wav} -> {piano_cover_file.mid}
 - I recommend you to use original codes from this repo : [High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times](https://github.com/qiuqiangkong/piano_transcription_inference)
+Use the midiscript.py to transcribe from and to folders.
 
 2. synchronize midi 
 ```bash
