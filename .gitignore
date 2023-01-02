@@ -2,3 +2,7 @@ __pycache__
 *.zip
 .ipynb_checkpoints
 .vscode
+models/
+model*.ckpt
+dist/
+*.egg-info/
