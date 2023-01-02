@@ -51,12 +51,13 @@ pip install build
 ```
 To install build dependency, then build it:
 ```
-python -m build; pipx install ./dist/pop2piano*.whl
+python -m build
 ```
 This creates a `dist` folder that you can install from:
 ```
 pip install ./dist/pop2piano*.whl
 ``` 
+(you can also replace `pip` by `pipx`.)
 
 ## How to prepare dataset
 ### Download Original Media
