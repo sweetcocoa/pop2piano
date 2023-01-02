@@ -12,8 +12,8 @@ from omegaconf import OmegaConf
 from beat_quantizer import extract_rhythm, midi_quantize_by_beats
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from midiaudiopair import MidiAudioPair
-from utils.dsp import get_stereo
+from ..midiaudiopair import MidiAudioPair
+from ..utils.dsp import get_stereo
 
 
 def estimate(meta_file, ignore_sustain_pedal):

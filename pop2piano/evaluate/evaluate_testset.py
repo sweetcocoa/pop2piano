@@ -8,9 +8,9 @@ import pretty_midi
 from omegaconf import OmegaConf
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from midiaudiopair import MidiAudioPair
-from evaluate import midi_melody_accuracy as ma
-from transformer_wrapper import DEFAULT_COMPOSERS
+from ..midiaudiopair import MidiAudioPair
+import .midi_melody_accuracy as ma
+from ..transformer_wrapper import DEFAULT_COMPOSERS
 
 
 def evaluate(meta_file, composer_dic, model_id):
