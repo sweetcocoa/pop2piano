@@ -89,16 +89,19 @@ def main():
 
     for audio_file in input_files:
         for composer in composers:
-            pm, composer, mix_path, midi_path = wrapper.generate(
-                audio_path=audio_file,
-                composer=composer,
-                model="dpipqxiy",
-                show_plot=args.plot,
-                save_midi=args.midi,
-                save_mix=args.mix,
-                output_prefix=args.output,
-            )
-            note_seq.plot_sequence(note_seq.midi_to_note_sequence(pm))
+            try:
+                pm, composer, mix_path, midi_path = wrapper.generate(
+                    audio_path=audio_file,
+                    composer=composer,
+                    model="dpipqxiy",
+                    show_plot=args.plot,
+                    save_midi=args.midi,
+                    save_mix=args.mix,
+                    output_prefix=args.output,
+                )
+                # note_seq.plot_sequence(note_seq.midi_to_note_sequence(pm))
+            except:
+                print(f"Error: could not process files {audio_file} for {composer}")
 
 if __name__ == "__main__":
     main()
