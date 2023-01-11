@@ -10,10 +10,10 @@ import soundfile as sf
 from torch.nn.utils.rnn import pad_sequence
 from transformers import T5Config, T5ForConditionalGeneration
 
-from midi_tokenizer import MidiTokenizer, extrapolate_beat_times
-from layer.input import LogMelSpectrogram, ConcatEmbeddingToMel
-from preprocess.beat_quantizer import extract_rhythm, interpolate_beat_times
-from utils.dsp import get_stereo
+from .midi_tokenizer import MidiTokenizer, extrapolate_beat_times
+from .layer.input import LogMelSpectrogram, ConcatEmbeddingToMel
+from .preprocess.beat_quantizer import extract_rhythm, interpolate_beat_times
+from .utils.dsp import get_stereo
 
 
 DEFAULT_COMPOSERS = {"various composer": 2052}
@@ -207,6 +207,7 @@ class TransformerWrapper(pl.LightningModule):
         show_plot=False,
         save_midi=False,
         save_mix=False,
+        output_prefix=None,
         midi_path=None,
         mix_path=None,
         click_amp=0.2,
@@ -232,6 +233,13 @@ class TransformerWrapper(pl.LightningModule):
                 if midi_path is None
                 else midi_path
             )
+            if output_prefix:
+                root = os.path.dirname(audio_path)
+                output_path = os.path.join(root, output_prefix)
+                if not os.path.exists(output_path):
+                    os.makedirs(output_path)
+                mix_path = os.path.join(output_path, os.path.basename(mix_path))
+                midi_path = os.path.join(output_path, os.path.basename(midi_path))
 
         max_batch_size = 64 // n_bars if max_batch_size is None else max_batch_size
         composer_to_feature_token = self.composer_to_feature_token
