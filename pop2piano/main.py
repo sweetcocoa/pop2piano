@@ -1,4 +1,5 @@
 import os
+import sys
 from configargparse import ArgumentParser
 
 import torch
@@ -41,6 +42,7 @@ def main_arguments_parser():
                         default=True, help='Whether to save mix file. Defaults to true.')
     parser.add_argument('--plot', '-p', type=str2bool, nargs='?',
                         default=False, help='Whether to save show the plot. Defaults to false.')
+    parser.add_argument('--nocuda', '-n', action="store_true", help='Pass this flag to run on CPU (without CUDA)')
 
     parser.add_argument('input', nargs='+',
                         default=False, help='Input files or folders. Accepts mp3 and wav files.')
@@ -81,7 +83,15 @@ def main():
     model_path = args.model or "~/src/pop2piano/model-1999-val_0.67311615.ckpt"
     model_path = os.path.realpath(os.path.expanduser(model_path))
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cuda"
+    if not torch.cuda.is_available():
+        if not args.nocuda:
+            print("CUDA unavailable. "
+                  "If it should be, you can restart it with the following command:"
+                  "sudo rmmod nvidia_uvm; sudo modprobe nvidia_uvm"
+                  "If not, run the command again with the nocuda flag.")
+            sys.exit(1)
+        device = "cpu"
     config = OmegaConf.load(config_path)
     wrapper = TransformerWrapper(config)
     wrapper = wrapper.load_from_checkpoint(model_path, config=config).to(device)
