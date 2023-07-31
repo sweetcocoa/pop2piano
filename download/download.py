@@ -33,17 +33,17 @@ def download_piano(
         else:
             postprocess_call = ""
         result = os.system(
-            f"""youtube-dl -o "{output}" \\
-                --extract-audio \\
-                --audio-quality 0 \\
-                --audio-format wav \\
-                --retries 50 \\
-                --prefer-ffmpeg \\
-                {"--get-filename" if dry_run else ""}\\
-                {postprocess_call} \\
-                --force-ipv4 \\
-                --yes-playlist \\
-                --ignore-errors \\
+            f"""youtube-dl -o "{output}" \
+                --extract-audio \
+                --audio-quality 0 \
+                --audio-format wav \
+                --retries 50 \
+                --prefer-ffmpeg \
+                {"--get-filename" if dry_run else ""}\
+                {postprocess_call} \
+                --force-ipv4 \
+                --yes-playlist \
+                --ignore-errors \
                 {url}"""
         )
 
@@ -93,15 +93,15 @@ def download_pop(piano_id, pop_id, output_dir, dry_run):
     url = f"https://www.youtube.com/watch?v={pop_id}"
 
     result = os.system(
-        f"""youtube-dl -o "{output_template}" \\
-            --extract-audio \\
-            --audio-quality 0 \\
-            --audio-format wav \\
-            --retries 25 \\
-            {"--get-filename" if dry_run else ""}\\
-            --prefer-ffmpeg \\
-            --match-filter 'duration < 300 & duration > 150'\\
-            --postprocessor-args "-ac 2 -ar 44100" \\
+        f"""youtube-dl -o "{output_template}" \
+            --extract-audio \
+            --audio-quality 0 \
+            --audio-format wav \
+            --retries 25 \
+            {"--get-filename" if dry_run else ""}\
+            --prefer-ffmpeg \
+            --match-filter 'duration < 300 & duration > 150'\
+            --postprocessor-args "-ac 2 -ar 44100" \
             {url}"""
     )
 

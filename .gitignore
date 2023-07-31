@@ -2,3 +2,5 @@ __pycache__
 *.zip
 .ipynb_checkpoints
 .vscode
+download/output_dir/
+preprocess/midis/
